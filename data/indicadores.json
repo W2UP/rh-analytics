@@ -1,0 +1,22 @@
+{
+  "usuario": "Ronilson",
+  "ultimaAtualizacao": "30/07/2026 21:15",
+  "cards": {
+    "funcionarios": 124,
+    "admissoes": 8,
+    "desligamentos": 2,
+    "turnover": "1.6%",
+    "atestados": 15,
+    "advertencias": 3,
+    "faltas": 7,
+    "aniversariantes": 5
+  },
+  "graficoAtestados": {
+    "labels": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul"],
+    "dados": [12, 19, 8, 15, 22, 10, 15]
+  },
+  "graficoTurnover": {
+    "labels": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul"],
+    "dados": [2.1, 1.8, 2.5, 1.9, 1.5, 2.0, 1.6]
+  }
+}
