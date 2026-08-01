@@ -3,11 +3,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function carregarDados() {
-  // Na versão futura (API), basta trocar esta URL pela chamada da API do Notion
-  fetch("data/indicadores.json")
+ function carregarDados() {
+  // Chamada para a Serverless Function do Netlify
+
+  fetch("/.netlify/functions/metrics")
     .then((response) => {
       if (!response.ok) {
-        throw new Error("Erro ao carregar o ficheiro JSON");
+        throw new Error("Erro ao procurar dados da API");
       }
       return response.json();
     })
@@ -17,7 +19,20 @@ function carregarDados() {
       renderChartAtestados(data.graficoAtestados);
       renderChartTurnover(data.graficoTurnover);
     })
-    .catch((error) => console.error("Erro no processamento dos dados:", error));
+    .catch((error) => {
+      console.warn("Falha na API Serverless, a carregar dados locais de fallback...", error);
+      // Caso a API falhe, carrega o JSON estático como fallback
+      fetch("data/indicadores.json")
+        .then((res) => res.json())
+        .then((data) => {
+          renderHeader(data);
+          renderCards(data.cards);
+          renderChartAtestados(data.graficoAtestados);
+          renderChartTurnover(data.graficoTurnover);
+        });
+    });
+}
+
 }
 
 function renderHeader(data) {
