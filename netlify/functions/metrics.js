@@ -2,62 +2,74 @@ exports.handler = async (event, context) => {
   const NOTION_TOKEN = process.env.NOTION_TOKEN;
   const DB_FUNCIONARIOS_ID = process.env.DB_FUNCIONARIOS_ID;
 
-  // Validação simples de variáveis
   if (!NOTION_TOKEN || !DB_FUNCIONARIOS_ID) {
     return {
-      statusCode: 200, // Retorna status ok mas avisa o erro no JSON
-      body: JSON.stringify({ 
-        error: true,
-        message: "Variáveis de ambiente NOTION_TOKEN ou DB_FUNCIONARIOS_ID não configuradas no Netlify." 
-      }),
+      statusCode: 500,
+      body: JSON.stringify({ error: "Variáveis de ambiente ausentes." }),
     };
   }
 
   try {
-    const response = await fetch(`https://api.notion.com/v1/databases/${DB_FUNCIONARIOS_ID}/query`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${NOTION_TOKEN.trim()}`,
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json",
-      },
-    });
+    let results = [];
+    let hasMore = true;
+    let nextCursor = undefined;
 
-    const data = await response.json();
+    // Loop de paginação para buscar TODOS os colaboradores (mesmo se houver mais de 100)
+    while (hasMore) {
+      const response = await fetch(`https://api.notion.com/v1/databases/${DB_FUNCIONARIOS_ID}/query`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${NOTION_TOKEN.trim()}`,
+          "Notion-Version": "2022-06-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          start_cursor: nextCursor,
+          page_size: 100
+        }),
+      });
 
-    if (!response.ok) {
-      console.error("Erro retornado pelo Notion:", data);
-      throw new Error(data.message || `Erro Notion (${response.status})`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Erro na consulta do Notion");
+      }
+
+      results = results.concat(data.results);
+      hasMore = data.has_more;
+      nextCursor = data.next_cursor;
     }
 
+    // Contadores
     let funcionariosAtivos = 0;
     let desligamentos = 0;
 
-    // Varre os registos do Notion com tratamento defensivo
-    if (data.results && Array.isArray(data.results)) {
-      data.results.forEach((page) => {
-        const props = page.properties || {};
-        
-        // Tenta encontrar uma coluna de status independente de maiúsculas/minúsculas
-        const statusProp = props["Status"] || props["status"] || props["Situação"] || props["situacao"];
-        const statusValue = statusProp?.select?.name || statusProp?.status?.name || "";
+    results.forEach((page) => {
+      const props = page.properties;
+      
+      // Procura qualquer propriedade do tipo 'select' ou 'status'
+      for (const key in props) {
+        const prop = props[key];
+        const val = prop.select?.name || prop.status?.name || "";
 
-        if (statusValue.toLowerCase() === "ativo") {
-          funcionariosAtivos++;
-        } else if (statusValue.toLowerCase() === "desligado") {
-          desligamentos++;
-        }
-      });
+        if (val.toLowerCase() === "ativo") funcionariosAtivos++;
+        if (val.toLowerCase() === "desligado" || val.toLowerCase() === "inativo") desligamentos++;
+      }
+    });
+
+    // Se o contador automático não encontrar pela palavra "Ativo", usa a contagem total de linhas
+    if (funcionariosAtivos === 0 && results.length > 0) {
+      funcionariosAtivos = results.length;
     }
 
     const payload = {
       usuario: "Ronilson",
       ultimaAtualizacao: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' }),
       cards: {
-        funcionarios: funcionariosAtivos || data.results?.length || 0,
-        admissoes: 8,
+        funcionarios: funcionariosAtivos,
+        admissoes: 0,
         desligamentos: desligamentos,
-        turnover: "1.2%",
+        turnover: "0%",
         atestados: 0,
         advertencias: 0,
         faltas: 0,
@@ -65,29 +77,24 @@ exports.handler = async (event, context) => {
       },
       graficoAtestados: {
         labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul"],
-        dados: [10, 15, 8, 12, 18, 9, 14]
+        dados: [0, 0, 0, 0, 0, 0, 0]
       },
       graficoTurnover: {
         labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul"],
-        dados: [2.0, 1.8, 2.2, 1.5, 1.2, 1.6, 1.2]
+        dados: [0, 0, 0, 0, 0, 0, 0]
       }
     };
 
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     };
 
   } catch (error) {
-    console.error("Erro interno na função:", error.message);
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: true, message: error.message }),
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };
