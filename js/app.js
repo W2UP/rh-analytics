@@ -3,9 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function carregarDados() {
- function carregarDados() {
   // Chamada para a Serverless Function do Netlify
-
   fetch("/.netlify/functions/metrics")
     .then((response) => {
       if (!response.ok) {
@@ -31,8 +29,6 @@ function carregarDados() {
           renderChartTurnover(data.graficoTurnover);
         });
     });
-}
-
 }
 
 function renderHeader(data) {
@@ -100,6 +96,7 @@ function renderChartTurnover(dadosTurnover) {
       }]
     },
     options: {
+      
       responsive: true,
       plugins: {
         legend: { display: false }
