@@ -36,13 +36,107 @@
 
       <div class="dashboard-body">
         
-        <section class="cards-grid">
+    <section class="cards-grid">
           <div class="card">
             <div class="card-icon icon-blue"><i class="fa-solid fa-users"></i></div>
             <div class="card-info">
               <h3>Funcionários</h3>
               <div class="value" id="val-funcionarios">-</div>
             </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-green"><i class="fa-solid fa-user-plus"></i></div>
+            <div class="card-info">
+              <h3>Admissões</h3>
+              <div class="value" id="val-admissoes">-</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-red"><i class="fa-solid fa-user-minus"></i></div>
+            <div class="card-info">
+              <h3>Desligamentos</h3>
+              <div class="value" id="val-desligamentos">-</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-purple"><i class="fa-solid fa-arrows-rotate"></i></div>
+            <div class="card-info">
+              <h3>Turnover</h3>
+              <div class="value" id="val-turnover">-</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-yellow"><i class="fa-solid fa-notes-medical"></i></div>
+            <div class="card-info">
+              <h3>Atestados</h3>
+              <div class="value" id="val-atestados">-</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="card-info">
+              <h3>Advertências</h3>
+              <div class="value" id="val-advertencias">-</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-yellow"><i class="fa-solid fa-user-xmark"></i></div>
+            <div class="card-info">
+              <h3>Faltas</h3>
+              <div class="value" id="val-faltas">-</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon icon-green"><i class="fa-solid fa-cake-candles"></i></div>
+            <div class="card-info">
+              <h3>Aniversariantes</h3>
+              <div class="value" id="val-aniversariantes">-</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid-2-col">
+          <div class="card-painel">
+            <h3>⚠️ Contratos de Experiência a Vencer</h3>
+            <ul id="lista-experiencia"></ul>
+          </div>
+        
+          <div class="card-painel">
+            <h3>🎉 Aniversariantes do Mês</h3>
+            <ul id="lista-aniversariantes"></ul>
+          </div>
+        </section>
+        
+        <section class="grid-2-col">
+          <div class="card-painel">
+            <h3>📊 CIDs Mais Frequentes</h3>
+            <ul id="lista-top-cids"></ul>
+          </div>
+        
+          <div class="card-painel">
+            <h3>🩺 Médicos com Mais Emissões</h3>
+            <ul id="lista-top-medicos"></ul>
+          </div>
+        </section>
+
+        <section class="charts-grid">
+          <div class="chart-card">
+            <h2><i class="fa-solid fa-chart-column"></i> Atestados por Mês</h2>
+            <canvas id="chartAtestados"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <h2><i class="fa-solid fa-chart-line"></i> Evolução do Turnover (%)</h2>
+            <canvas id="chartTurnover"></canvas>
+          </div>
+        </section>
           </div>
 
           <div class="grid-2-col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
