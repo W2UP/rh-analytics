@@ -322,3 +322,49 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================
+   FILTROS DE DATA (Header)
+   ========================================= */
+.filter-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.date-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.date-select:hover {
+  border-color: var(--primary);
+}
+
+.date-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Ajuste no top-header para acomodar 3 itens (Título, Filtros e Perfil) */
+@media (max-width: 768px) {
+  .top-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  .filter-container {
+    width: 100%;
+  }
+  .date-select {
+    flex: 1;
+  }
+}
