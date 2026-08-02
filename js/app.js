@@ -1,10 +1,32 @@
+// Variáveis globais para armazenar os gráficos e evitar sobreposição
+let chartAtestadosInst = null;
+let chartTurnoverInst = null;
+
 document.addEventListener("DOMContentLoaded", () => {
+  // 1. Escuta as mudanças nos seletores de mês e ano
+  const monthFilter = document.getElementById("month-filter");
+  const yearFilter = document.getElementById("year-filter");
+  
+  if (monthFilter) monthFilter.addEventListener("change", carregarDados);
+  if (yearFilter) yearFilter.addEventListener("change", carregarDados);
+
+  // 2. Carrega os dados iniciais ao abrir a página
   carregarDados();
 });
 
 function carregarDados() {
+  // Captura o que está selecionado nos botões (se existirem, senão usa padrão)
+  const monthFilter = document.getElementById("month-filter");
+  const yearFilter = document.getElementById("year-filter");
+  
+  const mesSelecionado = monthFilter ? monthFilter.value : "todos";
+  const anoSelecionado = yearFilter ? yearFilter.value : "todos";
+
+  // Adiciona o mês e o ano na URL da API (ex: ?month=08&year=2026)
+  const apiUrl = `/.netlify/functions/metrics?month=${mesSelecionado}&year=${anoSelecionado}`;
+
   // Chamada para a Serverless Function do Netlify
-  fetch("/.netlify/functions/metrics")
+  fetch(apiUrl)
     .then((response) => {
       if (!response.ok) {
         throw new Error("Erro ao procurar dados da API");
@@ -133,7 +155,13 @@ function renderChartAtestados(dadosAtestados) {
   const el = document.getElementById("chartAtestados");
   if (!el) return;
   const ctx = el.getContext("2d");
-  new Chart(ctx, {
+  
+  // Destrói o gráfico anterior se ele existir
+  if (chartAtestadosInst) {
+    chartAtestadosInst.destroy();
+  }
+
+  chartAtestadosInst = new Chart(ctx, {
     type: "bar",
     data: {
       labels: dadosAtestados.labels,
@@ -158,7 +186,13 @@ function renderChartTurnover(dadosTurnover) {
   const el = document.getElementById("chartTurnover");
   if (!el) return;
   const ctx = el.getContext("2d");
-  new Chart(ctx, {
+  
+  // Destrói o gráfico anterior se ele existir
+  if (chartTurnoverInst) {
+    chartTurnoverInst.destroy();
+  }
+
+  chartTurnoverInst = new Chart(ctx, {
     type: "line",
     data: {
       labels: dadosTurnover.labels,
