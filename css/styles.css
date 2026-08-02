@@ -220,10 +220,15 @@ body {
 /* Layout em Grade para os Painéis Inferiores */
 .grid-2-col {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: 1fr 1fr; /* Força exatamente duas colunas simétricas */
   gap: 1.5rem;
 }
 
+@media (max-width: 900px) {
+  .grid-2-col {
+    grid-template-columns: 1fr; /* Empilha apenas em telas menores */
+  }
+}
 /* Card Genérico dos Painéis */
 .card-painel {
   background-color: var(--bg-card);
