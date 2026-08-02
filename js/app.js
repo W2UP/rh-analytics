@@ -113,7 +113,7 @@ function renderListas(data) {
     }
   }
 
-  // 4. Renderiza Top Médicos
+  // 4. Renderiza Top todos os Médicos
   const elemMed = document.getElementById("lista-top-medicos");
   if (elemMed) {
     if (!data.topMedicos || data.topMedicos.length === 0) {
