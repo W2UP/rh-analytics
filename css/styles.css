@@ -237,3 +237,58 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Layout em Grade para os Painéis */
+.grid-2-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+/* Card Genérico dos Painéis */
+.card-painel {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f3f4f6;
+}
+
+.card-painel h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Listas Internas */
+.card-painel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.card-painel li {
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.card-painel li:last-child {
+  border-bottom: none;
+}
+
+/* Tag/Badge de Destaque */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
