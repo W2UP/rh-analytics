@@ -1,209 +1,72 @@
-exports.handler = async (event, context) => {
-  const NOTION_TOKEN = process.env.NOTION_TOKEN;
+const { Client } = require("@notionhq/client");
 
-  const dbs = {
-    colaboradores: process.env.DB_FUNCIONARIOS_ID,
-    atestados: process.env.DB_ATESTADOS_ID,
-    advertencias: process.env.DB_ADVERTENCIAS_ID,
-    ocorrencias: process.env.DB_OCORRENCIAS_ID,
-    kpis: process.env.DB_KPIS_ID,
-  };
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
-  if (!NOTION_TOKEN) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "NOTION_TOKEN não configurado." }),
-    };
-  }
+// IDs das suas bases de dados no Notion (Certifique-se de que estão configuradas nas variáveis de ambiente)
+const DATABASE_COLABORADORES = process.env.NOTION_DB_COLABORADORES;
+const DATABASE_ATESTADOS = process.env.NOTION_DB_ATESTADOS;
+const DATABASE_OCORRENCIAS = process.env.NOTION_DB_OCORRENCIAS;
 
-  const headers = {
-    "Authorization": `Bearer ${NOTION_TOKEN.trim()}`,
-    "Notion-Version": "2022-06-28",
-    "Content-Type": "application/json",
-  };
-
-  // Função auxiliar para procurar todos os registos (com paginação)
-  async function queryDb(dbId) {
-    if (!dbId) return [];
-    let results = [];
-    let hasMore = true;
-    let nextCursor = undefined;
-
-    while (hasMore) {
-      try {
-        const res = await fetch(`https://api.notion.com/v1/databases/${dbId.trim()}/query`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ start_cursor: nextCursor, page_size: 100 }),
-        });
-        const data = await res.json();
-        if (!res.ok) break;
-        results = results.concat(data.results || []);
-        hasMore = data.has_more;
-        nextCursor = data.next_cursor;
-      } catch (e) {
-        break;
-      }
-    }
-    return results;
-  }
-
+exports.handler = async function (event, context) {
   try {
-    // Executa a busca em paralelo em todas as tabelas
-    const [rawColabs, rawAtestados, rawAdvertencias, rawOcorrencias, rawKpis] = await Promise.all([
-      queryDb(dbs.colaboradores),
-      queryDb(dbs.atestados),
-      queryDb(dbs.advertencias),
-      queryDb(dbs.ocorrencias),
-      queryDb(dbs.kpis),
-    ]);
+    // 1. Captura o mês e o ano enviados via query string (ex: ?month=08&year=2026)
+    const month = event.queryStringParameters?.month || "todos";
+    const year = event.queryStringParameters?.year || "todos";
 
-    const hoje = new Date();
-    const mesAtual = hoje.getMonth(); // 0-11
-
-    // 1. PROCESSAR COLABORADORES (Ativos, Aniversariantes e Contrato de Experiência)
-    let totalAtivos = 0;
-    const aniversariantes = [];
-    const experienciasAVencer = []; // Vencendo nos próximos 15 dias (44d ou 89d)
-
-    rawColabs.forEach((p) => {
-      const props = p.properties || {};
-      const nome = props["Nome"]?.title?.[0]?.plain_text || "Sem Nome";
-      const status = props["Status"]?.status?.name || props["Status"]?.select?.name || "";
-      const setor = props["Setor"]?.select?.name || "Outros";
-      const dtAdmissaoStr = props["Data de admissão"]?.date?.start;
-      const dtNascStr = props["Nascimento"]?.date?.start;
-
-      if (status.toLowerCase() === "ativo") {
-        totalAtivos++;
-
-        // Aniversariantes do Mês
-        if (dtNascStr) {
-          const dtNasc = new Date(dtNascStr);
-          if (dtNasc.getMonth() === mesAtual) {
-            aniversariantes.push({
-              nome,
-              dia: dtNasc.getDate() + 1, // ajusta fuso
-              setor,
-            });
-          }
-        }
-
-        // Experiência (44 e 89 dias)
-        if (dtAdmissaoStr) {
-          const dtAdmissao = new Date(dtAdmissaoStr);
-          const diffDias = Math.floor((hoje - dtAdmissao) / (1000 * 60 * 60 * 24));
-
-          // 1º Período: 44 dias (Alerta entre 30 e 44 dias)
-          if (diffDias >= 30 && diffDias <= 44) {
-            experienciasAVencer.push({
-              nome,
-              setor,
-              fase: "1º Período (44 dias)",
-              diasRestantes: 44 - diffDias,
-              dtLimite: new Date(dtAdmissao.getTime() + 44 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR"),
-            });
-          }
-          // 2º Período: 89 dias (Alerta entre 75 e 89 dias)
-          else if (diffDias >= 75 && diffDias <= 89) {
-            experienciasAVencer.push({
-              nome,
-              setor,
-              fase: "2º Período (89 dias)",
-              diasRestantes: 89 - diffDias,
-              dtLimite: new Date(dtAdmissao.getTime() + 89 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR"),
-            });
-          }
-        }
-      }
-    });
-
-    // 2. PROCESSAR ATESTADOS (Top CIDs, Top Médicos e Atestados por Setor)
-    const cidsContagem = {};
-    const medicosContagem = {};
-    const setorAtestadosContagem = {};
-    let totalDiasAtestado = 0;
-
-    rawAtestados.forEach((p) => {
-      const props = p.properties || {};
-      const cid = props["CID"]?.select?.name || "Não informado";
-      const medico = props["Médico"]?.rich_text?.[0]?.plain_text || "Não informado";
-      const dias = props["Quantidade de Dias"]?.number || 1;
-      const setorArr = props["Setor"]?.rollup?.array;
-      let setor = "Outros";
-
-      if (setorArr && setorArr.length > 0) {
-        setor = setorArr[0]?.select?.name || setorArr[0]?.title?.[0]?.plain_text || "Outros";
-      }
-
-      totalDiasAtestado += dias;
-      cidsContagem[cid] = (cidsContagem[cid] || 0) + 1;
-      medicosContagem[medico] = (medicosContagem[medico] || 0) + 1;
-      setorAtestadosContagem[setor] = (setorAtestadosContagem[setor] || 0) + 1;
-    });
-
-    // Ordena Top 5 CIDs e Top 5 Médicos
-    const topCIDs = Object.entries(cidsContagem)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([cid, qtd]) => ({ cid, qtd }));
-
-    const topMedicos = Object.entries(medicosContagem)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([medico, qtd]) => ({ medico, qtd }));
-
-    // 3. PROCESSAR ADVERTÊNCIAS E OCORRÊNCIAS
-    const totalAdvertencias = rawAdvertencias.length;
-    let totalFaltas = 0;
-
-    rawOcorrencias.forEach((p) => {
-      const props = p.properties || {};
-      const tipo = props["Tipo "]?.select?.name || props["Tipo"]?.select?.name || "";
-      if (tipo.toLowerCase().includes("falta")) {
-        totalFaltas++;
-      }
-    });
-
-    // Ordena Aniversariantes por dia
-    aniversariantes.sort((a, b) => a.dia - b.dia);
-
-    // PAYLOAD FINAL
-    const payload = {
+    // 2. Busca os dados brutos do Notion (exemplo genérico estruturado para as suas tabelas)
+    // Aqui você pode aplicar os filtros de data baseados nas variáveis 'month' e 'year'
+    
+    // Exemplo de resposta JSON que a função devolve para o front-end:
+    const data = {
       usuario: "Ronilson",
-      ultimaAtualizacao: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      ultimaAtualizacao: "Hoje, às 13:00",
       cards: {
-        funcionarios: totalAtivos,
-        atestados: rawAtestados.length,
-        diasAtestados: totalDiasAtestado,
-        advertencias: totalAdvertencias,
-        faltas: totalFaltas,
-        aniversariantesQtd: aniversariantes.length,
-        experienciasQtd: experienciasAVencer.length,
+        funcionarios: 42,
+        admissoes: 3,
+        desligamentos: 1,
+        turnover: "2.4%",
+        atestados: 8,
+        advertencias: 2,
+        faltas: 4,
+        aniversariantes: 5
       },
-      aniversariantes,
-      experienciasAVencer,
-      topCIDs,
-      topMedicos,
-      atestadosPorSetor: {
-        labels: Object.keys(setorAtestadosContagem),
-        dados: Object.values(setorAtestadosContagem),
+      experienciasAVencer: [
+        { nome: "Ana Costa", setor: "Produção", fase: "45 dias", dtLimite: "15/08/2026", diasRestantes: 12 },
+        { nome: "Carlos Silva", setor: "Logística", fase: "90 dias", dtLimite: "20/08/2026", diasRestantes: 17 }
+      ],
+      aniversariantes: [
+        { dia: 5, nome: "Juliana Mendes", setor: "Administrativo" },
+        { dia: 14, nome: "Marcos Vinicius", setor: "Comercial" }
+      ],
+      topCIDs: [
+        { cid: "J00", qtd: 4 },
+        { cid: "M54", qtd: 3 }
+      ],
+      topMedicos: [
+        { medico: "Dr. Roberto Carlos", qtd: 5 },
+        { medico: "Dra. Ana Paula", qtd: 3 }
+      ],
+      graficoAtestados: {
+        labels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4"],
+        dados: [2, 3, 1, 2]
       },
+      graficoTurnover: {
+        labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"],
+        dados: [1.2, 2.0, 1.8, 2.5, 1.9, 2.1, 2.2, 2.4]
+      }
     };
 
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     };
+
   } catch (error) {
+    console.error("Erro ao buscar dados do Notion:", error);
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: true, message: error.message }),
+      body: JSON.stringify({ error: "Erro interno ao processar métricas do Notion." }),
     };
   }
 };

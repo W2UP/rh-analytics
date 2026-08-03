@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - RH Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-body">
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-brand">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>RH Analytics</span>
+        </div>
+        <p>Acesso ao painel de gestão de recursos humanos</p>
+      </div>
+
+      <form id="login-form" onsubmit="realizarLogin(event)">
+        <div class="form-group">
+          <label for="email">E-mail corporativo</label>
+          <div class="input-icon">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="email" placeholder="exemplo@empresa.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Palavra-passe</label>
+          <div class="input-icon">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="password" placeholder="••••••••" required>
+          </div>
+        </div>
+
+        <div id="login-error" class="login-error" style="display: none;">
+          E-mail ou palavra-passe incorretos.
+        </div>
+
+        <button type="submit" class="btn-login">Entrar no Dashboard</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

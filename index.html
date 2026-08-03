@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
+  <script>
+    // Verifica se o utilizador está logado. Se não estiver, manda de volta para o login.
+    if (localStorage.getItem("rh_logado") !== "true") {
+      window.location.href = "login.html";
+    }
+  </script>
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RH Analytics - Dashboard</title>
