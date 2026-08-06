@@ -7,7 +7,7 @@ function realizarLogin(event) {
 
   // Simulação de credenciais (depois podemos ligar ao Notion se quiseres)
   // Podes alterar o e-mail e palavra-passe aqui para os teus dados:
-  if (email === "ronilson@empresa.com" && password === "123456") {
+  if (email === "ronilson@empresa.com" && password === "RoniLima123456") {
     // Guarda no navegador que o utilizador está autenticado
     localStorage.setItem("rh_logado", "true");
     localStorage.setItem("rh_usuario", "Ronilson");

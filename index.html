@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <!-- Importa a biblioteca jsPDF para exportar o Kanban como PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
     // Verifica se o utilizador está logado. Se não estiver, manda de volta para o login.
@@ -27,8 +29,11 @@
         <span>RH Analytics</span>
       </div>
       <ul class="menu">
-        <li class="menu-item active">
+        <li class="menu-item active" id="nav-dashboard">
           <a href="#"><i class="fa-solid fa-house"></i> Dashboard</a>
+        </li>
+        <li class="menu-item" id="nav-onboarding">
+          <a href="#" id="menu-onboarding"><i class="fas fa-columns"></i> Colaboradores Onboarding</a>
         </li>
       </ul>
     </aside>
@@ -36,9 +41,9 @@
     <main class="main-content">
       
       <header class="top-header">
-        <h1>Visão Geral</h1>
+        <h1 id="header-title">Visão Geral</h1>
         
-        <div class="filter-container">
+        <div class="filter-container" id="filter-section">
           <select id="month-filter" class="date-select">
             <option value="todos">Todos os Meses</option>
             <option value="01">Janeiro</option>
@@ -68,109 +73,126 @@
           <span id="user-name">A carregar...</span>
         </div>
       </header>
-      </header>
 
       <div class="dashboard-body">
         
-        <section class="cards-grid">
-          <div class="card">
-            <div class="card-icon icon-blue"><i class="fa-solid fa-users"></i></div>
-            <div class="card-info">
-              <h3>Funcionários</h3>
-              <div class="value" id="val-funcionarios">-</div>
+        <!-- ABA 1: DASHBOARD PRINCIPAL -->
+        <div id="view-dashboard">
+          <section class="cards-grid">
+            <div class="card">
+              <div class="card-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+              <div class="card-info">
+                <h3>Funcionários</h3>
+                <div class="value" id="val-funcionarios">-</div>
+              </div>
+            </div>  
+
+            <div class="card">
+              <div class="card-icon icon-green"><i class="fa-solid fa-user-plus"></i></div>
+              <div class="card-info">
+                <h3>Admissões</h3>
+                <div class="value" id="val-admissoes">-</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-icon icon-green"><i class="fa-solid fa-user-plus"></i></div>
-            <div class="card-info">
-              <h3>Admissões</h3>
-              <div class="value" id="val-admissoes">-</div>
+            <div class="card">
+              <div class="card-icon icon-red"><i class="fa-solid fa-user-minus"></i></div>
+              <div class="card-info">
+                <h3>Desligamentos</h3>
+                <div class="value" id="val-desligamentos">-</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-icon icon-red"><i class="fa-solid fa-user-minus"></i></div>
-            <div class="card-info">
-              <h3>Desligamentos</h3>
-              <div class="value" id="val-desligamentos">-</div>
+            <div class="card">
+              <div class="card-icon icon-purple"><i class="fa-solid fa-arrows-rotate"></i></div>
+              <div class="card-info">
+                <h3>Turnover</h3>
+                <div class="value" id="val-turnover">-</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-icon icon-purple"><i class="fa-solid fa-arrows-rotate"></i></div>
-            <div class="card-info">
-              <h3>Turnover</h3>
-              <div class="value" id="val-turnover">-</div>
+            <div class="card">
+              <div class="card-icon icon-yellow"><i class="fa-solid fa-notes-medical"></i></div>
+              <div class="card-info">
+                <h3>Atestados</h3>
+                <div class="value" id="val-atestados">-</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-icon icon-yellow"><i class="fa-solid fa-notes-medical"></i></div>
-            <div class="card-info">
-              <h3>Atestados</h3>
-              <div class="value" id="val-atestados">-</div>
+            <div class="card">
+              <div class="card-icon icon-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="card-info">
+                <h3>Advertências</h3>
+                <div class="value" id="val-advertencias">-</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-icon icon-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <div class="card-info">
-              <h3>Advertências</h3>
-              <div class="value" id="val-advertencias">-</div>
+            <div class="card">
+              <div class="card-icon icon-yellow"><i class="fa-solid fa-user-xmark"></i></div>
+              <div class="card-info">
+                <h3>Faltas</h3>
+                <div class="value" id="val-faltas">-</div>
+              </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-icon icon-yellow"><i class="fa-solid fa-user-xmark"></i></div>
-            <div class="card-info">
-              <h3>Faltas</h3>
-              <div class="value" id="val-faltas">-</div>
+            <div class="card">
+              <div class="card-icon icon-green"><i class="fa-solid fa-cake-candles"></i></div>
+              <div class="card-info">
+                <h3>Aniversariantes</h3>
+                <div class="value" id="val-aniversariantes">-</div>
+              </div>
             </div>
-          </div>
+          </section>
 
-          <div class="card">
-            <div class="card-icon icon-green"><i class="fa-solid fa-cake-candles"></i></div>
-            <div class="card-info">
-              <h3>Aniversariantes</h3>
-              <div class="value" id="val-aniversariantes">-</div>
+          <section class="grid-2-col">
+            <div class="card-painel">
+              <h3>⚠️ Contratos de Experiência a Vencer</h3>
+              <ul id="lista-experiencia"></ul>
             </div>
-          </div>
-        </section>
+          
+            <div class="card-painel">
+              <h3>🎉 Aniversariantes do Mês</h3>
+              <ul id="lista-aniversariantes"></ul>
+            </div>
+          </section>
+          
+          <section class="grid-2-col">
+            <div class="card-painel">
+              <h3>📊 CIDs Mais Frequentes</h3>
+              <ul id="lista-top-cids"></ul>
+            </div>
+          
+            <div class="card-painel">
+              <h3>🩺 Médicos com Mais Emissões</h3>
+              <ul id="lista-top-medicos"></ul>
+            </div>
+          </section>
 
-        <section class="grid-2-col">
-          <div class="card-painel">
-            <h3>⚠️ Contratos de Experiência a Vencer</h3>
-            <ul id="lista-experiencia"></ul>
-          </div>
-        
-          <div class="card-painel">
-            <h3>🎉 Aniversariantes do Mês</h3>
-            <ul id="lista-aniversariantes"></ul>
-          </div>
-        </section>
-        
-        <section class="grid-2-col">
-          <div class="card-painel">
-            <h3>📊 CIDs Mais Frequentes</h3>
-            <ul id="lista-top-cids"></ul>
-          </div>
-        
-          <div class="card-painel">
-            <h3>🩺 Médicos com Mais Emissões</h3>
-            <ul id="lista-top-medicos"></ul>
-          </div>
-        </section>
+          <section class="charts-grid">
+            <div class="chart-card">
+              <h2><i class="fa-solid fa-chart-column"></i> Atestados por Mês</h2>
+              <canvas id="chartAtestados"></canvas>
+            </div>
 
-        <section class="charts-grid">
-          <div class="chart-card">
-            <h2><i class="fa-solid fa-chart-column"></i> Atestados por Mês</h2>
-            <canvas id="chartAtestados"></canvas>
+            <div class="chart-card">
+              <h2><i class="fa-solid fa-chart-line"></i> Evolução do Turnover (%)</h2>
+              <canvas id="chartTurnover"></canvas>
+            </div>
+          </section>
+        </div>
+
+        <!-- ABA 2: KANBAN DE ONBOARDING (Inicialmente Oculta) -->
+        <section id="view-onboarding" class="view-section" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Esteira Onboarding por Setor</h2>
+            <button id="btn-exportar-pdf" class="btn-primary" style="background: #2563EB; color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;">
+              <i class="fas fa-file-pdf"></i> Exportar PDF
+            </button>
           </div>
 
-          <div class="chart-card">
-            <h2><i class="fa-solid fa-chart-line"></i> Evolução do Turnover (%)</h2>
-            <canvas id="chartTurnover"></canvas>
+          <!-- Container do Kanban (Colunas por Setor) -->
+          <div id="kanban-board" style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px;">
+            <!-- As colunas dos setores serão injetadas dinamicamente aqui -->
           </div>
         </section>
 

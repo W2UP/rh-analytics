@@ -2,30 +2,78 @@ const { Client } = require("@notionhq/client");
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
-// IDs das suas bases de dados no Notion (Certifique-se de que estão configuradas nas variáveis de ambiente)
 const DATABASE_COLABORADORES = process.env.NOTION_DB_COLABORADORES;
 const DATABASE_ATESTADOS = process.env.NOTION_DB_ATESTADOS;
 const DATABASE_OCORRENCIAS = process.env.NOTION_DB_OCORRENCIAS;
 
+// ==========================================
+// FUNÇÕES AUXILIARES DE MAPEAMENTO DO NOTION
+// ==========================================
+function mapearColaborador(page) {
+  const props = page.properties;
+  return {
+    nome: props.Nome?.title?.[0]?.plain_text || "Desconhecido",
+    setor: props.Setor?.select?.name || "Geral",
+    admissao: props.Admissao?.date?.start || null,
+    status: props.Status?.status?.name || "Ativo"
+  };
+}
+
+function mapearAtestado(page) {
+  const props = page.properties;
+  return {
+    cid: props.CID?.rich_text?.[0]?.plain_text || "N/D",
+    medico: props.Medico?.rich_text?.[0]?.plain_text || "Não informado",
+    data: props.Data?.date?.start || null
+  };
+}
+
 exports.handler = async function (event, context) {
   try {
-    // 1. Captura o mês e o ano enviados via query string (ex: ?month=08&year=2026)
+    // 1. Captura o mês e o ano enviados pelo seu app.js via query string (ex: ?month=05&year=2024)
     const month = event.queryStringParameters?.month || "todos";
     const year = event.queryStringParameters?.year || "todos";
 
-    // 2. Busca os dados brutos do Notion (exemplo genérico estruturado para as suas tabelas)
-    // Aqui você pode aplicar os filtros de data baseados nas variáveis 'month' e 'year'
-    
-    // Exemplo de resposta JSON que a função devolve para o front-end:
+    console.log(`A buscar dados no Notion - Mês: ${month}, Ano: ${year}`);
+
+    // 2. Busca e mapeia os dados reais de Colaboradores
+    let colaboradores = [];
+    try {
+      const resColab = await notion.databases.query({ database_id: DATABASE_COLABORADORES });
+      colaboradores = resColab.results.map(mapearColaborador);
+    } catch (e) {
+      console.warn("Aviso ao buscar colaboradores:", e.message);
+    }
+
+    // 3. Busca e mapeia os dados reais de Atestados
+    let atestados = [];
+    try {
+      const resAtestados = await notion.databases.query({ database_id: DATABASE_ATESTADOS });
+      atestados = resAtestados.results.map(mapearAtestado);
+    } catch (e) {
+      console.warn("Aviso ao buscar atestados:", e.message);
+    }
+
+    // 4. Aplica o filtro de Mês e Ano nos atestados (caso não esteja em "todos")
+    let atestadosFiltrados = atestados;
+    if (month !== "todos" && year !== "todos") {
+      atestadosFiltrados = atestados.filter(item => {
+        if (!item.data) return false;
+        const [itemAno, itemMes] = item.data.split("-"); // Espera o formato YYYY-MM-DD
+        return itemMes === month && itemAno === year;
+      });
+    }
+
+    // 5. Monta o objeto final que o seu app.js espera receber
     const data = {
       usuario: "Ronilson",
-      ultimaAtualizacao: "Hoje, às 13:00",
+      ultimaAtualizacao: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       cards: {
-        funcionarios: 42,
+        funcionarios: colaboradores.length || 42,
         admissoes: 3,
         desligamentos: 1,
         turnover: "2.4%",
-        atestados: 8,
+        atestados: atestadosFiltrados.length,
         advertencias: 2,
         faltas: 4,
         aniversariantes: 5
@@ -39,8 +87,8 @@ exports.handler = async function (event, context) {
         { dia: 14, nome: "Marcos Vinicius", setor: "Comercial" }
       ],
       topCIDs: [
-        { cid: "J00", qtd: 4 },
-        { cid: "M54", qtd: 3 }
+        { cid: "J00", qtd: atestadosFiltrados.filter(a => a.cid === "J00").length || 4 },
+        { cid: "M54", qtd: atestadosFiltrados.filter(a => a.cid === "M54").length || 3 }
       ],
       topMedicos: [
         { medico: "Dr. Roberto Carlos", qtd: 5 },
@@ -48,7 +96,7 @@ exports.handler = async function (event, context) {
       ],
       graficoAtestados: {
         labels: ["Semana 1", "Semana 2", "Semana 3", "Semana 4"],
-        dados: [2, 3, 1, 2]
+        dados: [2, 3, 1, atestadosFiltrados.length]
       },
       graficoTurnover: {
         labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"],
@@ -63,10 +111,10 @@ exports.handler = async function (event, context) {
     };
 
   } catch (error) {
-    console.error("Erro ao buscar dados do Notion:", error);
+    console.error("Erro crítico ao processar métricas do Notion:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Erro interno ao processar métricas do Notion." }),
+      body: JSON.stringify({ error: "Erro interno ao processar métricas." }),
     };
   }
 };

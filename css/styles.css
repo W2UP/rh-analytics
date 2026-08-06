@@ -373,3 +373,73 @@ body {
     flex: 1;
   }
 }
+
+
+
+/* =========================================
+   ESTILOS PARA O KANBAN DE ONBOARDING
+   ========================================= */
+#kanban-board {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  min-height: 450px;
+}
+
+.kanban-column {
+  background-color: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 280px;
+  max-width: 300px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.kanban-column h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.kanban-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 300px;
+  overflow-y: auto;
+}
+
+.kanban-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: grab;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+}
+
+.kanban-card.dragging {
+  opacity: 0.4;
+  border: 2px dashed var(--primary);
+}
